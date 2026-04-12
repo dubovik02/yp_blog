@@ -25,6 +25,11 @@ message User {
     string password = 4;
 }
 
+message UserInfo {
+    string username = 1;
+    string email = 2;
+}
+
 message CreateRegisterRequest {
     string username = 1;
     string email = 2;
@@ -32,8 +37,8 @@ message CreateRegisterRequest {
 }
 
 message RegisterResponse {
-    int64 user_id = 1;
-    string email = 2;
+    string token = 1;
+    UserInfo user = 2;
 }
 
 message LoginRequest {
@@ -42,8 +47,8 @@ message LoginRequest {
 }
 
 message LoginResponse {
-    string email = 1;
-    string password = 2;
+    string token = 1;
+    UserInfo user = 2;
 }
 
 message Post {
@@ -72,9 +77,10 @@ message GetPostResponse {
 }
 
 message UpdatePostRequest {
-    string title = 1;
-    string content = 2;
-    int64 author_id = 3;
+    int64 post_id = 1;
+    string title = 2;
+    string content = 3;
+    int64 author_id = 4;
 }
 
 message UpdatePostResponse {
@@ -82,15 +88,16 @@ message UpdatePostResponse {
 }
 
 message DeletePostRequest {
-    int64 author_id = 2;
-}
-
-message DeletePostResponse {
     int64 post_id = 1;
 }
 
+message DeletePostResponse {
+    bool is_del = 1;
+}
+
 message ListPostsRequest {
-    int64 author_id = 1; //ид пользователя или пусто (все пользователи)
+    int64 offset = 1;
+    int64 limit =2;
 }
 
 message ListPostsResponse {

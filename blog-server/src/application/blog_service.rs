@@ -18,6 +18,10 @@ impl BlogService {
 
     pub async fn new_post(&self, user_id: i64, post_data: PostCreatedInfo) -> Result<Post, ServerError> {
 
+        let jwt_user_id = user_id;
+        let author_id = post_data.author_id;
+        if jwt_user_id != author_id { return Err(ServerError::Forbidden)}
+
         let new_post = self.blog_store.insert_post(
             PostCreatedInfo {
                 author_id: user_id,
@@ -80,6 +84,9 @@ impl BlogService {
     }
 
     pub async fn posts_list(&self, offset: i64, limit: i64) -> Result<Vec<Post>, ServerError> {
+
+        if offset < 0 || offset > 100 { return Err(ServerError::PaganationError) }
+        if limit < 0 || limit > 100 { return Err(ServerError::PaganationError) }
 
         let posts = self.blog_store.get_posts_list(offset, limit).await?;
         Ok(posts)

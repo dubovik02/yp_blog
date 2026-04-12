@@ -1,6 +1,6 @@
 use crate::domain::{error::ServerError};
 use chrono::{Duration, Utc};
-use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 
 const JWT_TTL_MINUTES: i64 = 1440;
@@ -57,7 +57,7 @@ impl JwtService {
         }
     }
 
-    pub fn verify_token(self, token: &str) -> Result<Claims, ServerError> {
+    pub fn verify_token(&self, token: &str) -> Result<Claims, ServerError> {
 
         match decode::<Claims>(
             token,

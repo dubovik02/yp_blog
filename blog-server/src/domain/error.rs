@@ -61,12 +61,16 @@ pub enum ServerError {
 
     #[error("Token is incorrect: {0}")]
     TokenError(#[from] actix_web::error::Error),
+
+    #[error("Offset and limit must be > 0 and < 30")]
+    PaganationError,
 }
 
 impl ResponseError for ServerError {
     fn error_response(&self) -> HttpResponse {
         let status = match self {
             //ServerError::Validation(_) => StatusCode::BAD_REQUEST,
+            ServerError::PaganationError => StatusCode::BAD_REQUEST,
             ServerError::UserAlreadyExistsError => StatusCode::CONFLICT,
             ServerError::UserNotFoundError => StatusCode::NOT_FOUND,
             ServerError::PostNotFoundError => StatusCode::NOT_FOUND,

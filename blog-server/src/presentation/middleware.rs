@@ -3,7 +3,7 @@ use std::future::{Ready, ready};
 use actix_web::{FromRequest, HttpMessage, HttpRequest, dev::ServiceRequest, error::ErrorUnauthorized};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 
-use crate::{JWT_SECRET_KEY, domain::error::ServerError, infrastructure::jwt::JwtService};
+use crate::{JWT_SECRET_KEY, infrastructure::jwt::JwtService};
 
 #[derive(Debug, Clone)]
 pub struct  AuthenticatedUser {

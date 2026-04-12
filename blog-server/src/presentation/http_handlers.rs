@@ -69,6 +69,7 @@ pub async fn login_user(auth_service: web::Data<Arc<AuthService>>, user: web::Js
 pub async fn new_post(blog_service: web::Data<Arc<BlogService>>, user: AuthenticatedUser, post_data: web::Json<CreatePostRequest>) -> Result<HttpResponse, ServerError> {
 
     tracing::info!("Attempt to create new post");
+    
     let new_post = blog_service.new_post(
         user.user_id,
         PostCreatedInfo {

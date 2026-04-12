@@ -1,4 +1,4 @@
-use std::{env, sync::Arc};
+use std::{env, net::SocketAddr, sync::Arc};
 
 use actix_cors::Cors;
 use actix_web::{App, HttpServer, middleware::{self, DefaultHeaders}, web};
@@ -7,7 +7,13 @@ use dotenvy::dotenv;
 use tonic::transport::Server;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::{application::{auth_service::AuthService, blog_service::BlogService}, blog::blog_service_server::BlogServiceServer, data::{blog_repository::BlogRepository, user_repository::UserRepository}, domain::error::ServerError, infrastructure::{database::{create_pool, create_schema}, jwt::JwtService}, presentation::{grpc_service::BlogGrpcService, http_handlers::{create_user, del_post, edit_post, get_post, health, login_user, new_post, posts_list}, middleware::jwt_validator}};
+use crate::{application::{auth_service::AuthService, blog_service::BlogService},  
+    data::{blog_repository::BlogRepository, user_repository::UserRepository}, 
+    domain::error::ServerError, 
+    infrastructure::{database::{create_pool, create_schema}, jwt::JwtService}, 
+    presentation::{grpc_service::BlogGrpcService, 
+    http_handlers::{create_user, del_post, edit_post, get_post, health, login_user, new_post, posts_list}, 
+    middleware::jwt_validator}};
 
 mod domain;
 mod infrastructure;
@@ -45,8 +51,6 @@ async fn main() -> Result<(), ServerError>{
         Err(e) => {println!("Error while creating schema: {}", e);}
     }
 
-    let http_addr = format!("{}:{}", SERVER_HOST, SERVER_PORT); 
-
     let jwt_service = Arc::new(JwtService::new(JWT_SECRET_KEY));
     let user_store = Arc::new(UserRepository::new(pool.clone()));
     let auth_service = Arc::new(AuthService::new(user_store.clone(), jwt_service.clone()));
@@ -55,10 +59,14 @@ async fn main() -> Result<(), ServerError>{
 
     let http_auth_service = auth_service.clone();
     let http_blog_service = blog_service.clone();
-    
-    println!("HTTP server has started on {}", http_addr);
+
+    // HTTP
+    let http_addr = format!("{}:{}", SERVER_HOST, SERVER_PORT); 
+    println!("HTTP server will started on {}", http_addr);
 
     let http = HttpServer::new(move || {
+
+        tracing::info!("HTTP server has started on {} : {}", SERVER_HOST, SERVER_PORT);
 
         let cors = Cors::default()
         .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
@@ -68,7 +76,7 @@ async fn main() -> Result<(), ServerError>{
         ])
         .supports_credentials()
         .max_age(3600);
-    
+
         App::new()
         .app_data(web::Data::new(http_auth_service.clone()))
         .app_data(web::Data::new(http_blog_service.clone()))
@@ -96,20 +104,35 @@ async fn main() -> Result<(), ServerError>{
         .bind(http_addr)?
         .run();
 
-    let grpc_addr = format!("{}:{}", GRPC_SERVER_HOST, GRPC_SERVER_PORT).parse()?;
-    let blog_service = BlogGrpcService::new();
+    // GRPC
+    let grpc_addr= format!("{}:{}", GRPC_SERVER_HOST, GRPC_SERVER_PORT);
+    println!("gRPC server will started on {}", grpc_addr);
 
-    println!("gRPC server has started on {}", grpc_addr);
-    let grpc = Server::builder()
-        .add_service(BlogServiceServer::new(blog_service))
-        .serve(grpc_addr);
+    let grpc_auth_service = auth_service.clone();
+    let grpc_blog_service = blog_service.clone();
+    let grps_jwt_service = jwt_service.clone();
+
+    let grpc = tokio::spawn(async move {
+        let addr: SocketAddr = grpc_addr
+            .parse()
+            .expect("configured gRPC address must be valid");
+        tracing::info!("gRPC server has started on {}", addr);
+        let grpc_service = BlogGrpcService::new(grpc_auth_service, grpc_blog_service, grps_jwt_service);
+        if let Err(e) = Server::builder()
+            .add_service(blog::blog_service_server::BlogServiceServer::new(grpc_service))
+            .serve(addr)
+            .await
+        {
+            tracing::error!("GRPC server started error: {}", e);
+        }
+    });
 
     tokio::select! {
-        res = http => {
-            println!("HTTP-server process has finished: {:?}", res);
-        }
-        res = grpc => {
-            println!("gRPC-server process has finished: {:?}", res);
+        _ = grpc => { tracing::error!("GRPC server has stopped"); }
+        result = http => {
+            if let Err(e) = result {
+                tracing::error!("HTTP error: {}", e);
+            }
         }
     }
 
