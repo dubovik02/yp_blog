@@ -2,7 +2,11 @@ use std::sync::Arc;
 
 use tonic::{Request, Response, Status};
 
-use crate::{application::{auth_service::AuthService, blog_service::BlogService}, blog::{self, CreatePostRequest, CreatePostResponse, CreateRegisterRequest, DeletePostRequest, DeletePostResponse, GetPostRequest, GetPostResponse, ListPostsRequest, ListPostsResponse, LoginRequest, LoginResponse, Post, RegisterResponse, UpdatePostRequest, UpdatePostResponse, UserInfo}, 
+use crate::{
+    application::{auth_service::AuthService, blog_service::BlogService}, 
+    blog::{self, CreatePostRequest, CreatePostResponse, CreateRegisterRequest, DeletePostRequest, 
+        DeletePostResponse, GetPostRequest, GetPostResponse, ListPostsRequest, ListPostsResponse, 
+        LoginRequest, LoginResponse, RegisterResponse, UpdatePostRequest, UpdatePostResponse, UserInfo}, 
     domain::{self, error::ServerError, post::{PostCreatedInfo, PostUpdateInfo}, user::{UserLoginInfo, UserRegisterInfo}}, infrastructure::jwt::JwtService
 };
 
@@ -126,7 +130,7 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
                 Status::not_found("Post not found")
             },
             ServerError::Forbidden => {
-                Status::permission_denied("Permission denied")
+                Status::unauthenticated("Permission denied")
             },
             other => Status::internal(other.to_string()),
         })?;
@@ -181,7 +185,7 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
                 Status::not_found("Post not found")
             },
             ServerError::Forbidden => {
-                Status::permission_denied("Permission denied")
+                Status::unauthenticated("Permission denied")
             },
             other => Status::internal(other.to_string()),
         })?;
@@ -208,7 +212,7 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
                 Status::not_found("Post not found")
             },
             ServerError::Forbidden => {
-                Status::permission_denied("Permission denied")
+                Status::unauthenticated("Permission denied")
             },
             other => Status::internal(other.to_string()),
         })?;
