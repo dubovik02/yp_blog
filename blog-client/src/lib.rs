@@ -19,6 +19,7 @@ pub const PATH_PROTECTED: &str = "/protected";
 pub const PATH_REGISTER: &str = "/auth/register";
 pub const PATH_LOGIN: &str = "/auth/login";
 pub const PATH_POSTS: &str = "/posts";
+pub const PATH_POSTS_NEW: &str = "/new";
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,23 +52,24 @@ pub struct PostsList {
     pub offset: i64,
 }
 
-pub trait BlogClientInterface {
+// pub trait BlogClientInterface {
 
-    async fn register(&self, req: CreateRegisterRequest) -> Result<RegisterResponse, ClientError>;
+//     //fn register(&self, req: CreateRegisterRequest) -> impl std::future::Future<Output = Result<RegisterResponse, ClientError>> + Send;
+//     async fn register(&self, req: CreateRegisterRequest) -> Result<RegisterResponse, ClientError>;
 
-    async fn login(&self, req: LoginRequest) -> Result<LoginResponse, ClientError>;
+//     async fn login(&self, req: LoginRequest) -> Result<LoginResponse, ClientError>;
 
-    async fn new_post(&self, token: &str, req_data: CreatePostRequest) -> Result<CreatePostResponse, ClientError>;
+//     async fn new_post(&self, token: &str, req_data: CreatePostRequest) -> Result<CreatePostResponse, ClientError>;
 
-    async fn get_post(&self, id: i64) -> Result<GetPostResponse, ClientError>;
+//     async fn get_post(&self, id: i64) -> Result<GetPostResponse, ClientError>;
 
-    async fn update_post(&self, token: &str, req_data: UpdatePostRequest) -> Result<UpdatePostResponse, ClientError>;
+//     async fn update_post(&self, token: &str, req_data: UpdatePostRequest) -> Result<UpdatePostResponse, ClientError>;
 
-    async fn del_post(&self, token: &str, req_data: DeletePostRequest) -> Result<DeletePostResponse, ClientError>;
+//     async fn del_post(&self, token: &str, req_data: DeletePostRequest) -> Result<DeletePostResponse, ClientError>;
 
-    async fn posts_list(&self, req_data: ListPostsRequest) -> Result<ListPostsResponse, ClientError>;
+//     async fn posts_list(&self, req_data: ListPostsRequest) -> Result<ListPostsResponse, ClientError>;
     
-}
+// }
 
 #[derive(Debug, Clone)]
 pub enum Transport {
@@ -84,19 +86,13 @@ pub struct BlogClient {
 
 impl BlogClient {
 
-    pub async fn new(&self, url: String, transport: Transport) -> Result<Self, ClientError> {
+    pub async fn new(url: String, transport: Transport) -> Result<Self, ClientError> {
         Ok(Self {  
             transport: transport,
             token: Arc::new(Mutex::new(None)),
             http_client: Arc::new(BlogHttpClient::new(url.clone())?),
             grpc_client: Arc::new(BlogGrpcClient::new(url.clone())),
         })
-        // self.transport = transport;
-        // match self.transport {
-        //     Transport::Http(url) => self.http_client = Arc::new(BlogHttpClient::new(url.clone())?),
-        //     Transport::Grpc(url) => self.grpc_client = Arc::new(BlogGrpcClient::new()),
-        // };
-        // self.token = Arc::new(Mutex::new(None));
     }
 
     pub async fn set_token(&self, token: String) {
@@ -136,14 +132,13 @@ impl BlogClient {
         Ok(res)
     }
 
-    pub async fn new_post(&self, id: i64, title: &str, content: &str) -> Result<CreatePostResponse, ClientError> {
+    pub async fn new_post(&self, title: &str, content: &str) -> Result<CreatePostResponse, ClientError> {
         let token = self.token.lock().await.clone()
             .ok_or(ClientError::UnAuthorizedError)?;
 
         let req = CreatePostRequest {
             title: title.to_string(),
             content: content.to_string(),
-            author_id: id,
         };
         let res = match &self.transport {
             Transport::Http => self.http_client.new_post(&token, req).await?,
@@ -160,42 +155,45 @@ impl BlogClient {
         Ok(res)
     }
 
-    pub async fn update_post(&self, id: i64, title: &str, content: &str) -> Result<Post, ClientError> {
-        // let token = self.token.lock().await.clone()
-        //     .ok_or(BlogClientError::Unauthorized)?;
-        // match &self.transport {
-        //     Transport::Http(_) => self.http.update_post(id, title, content, &token).await,
-        //     Transport::Grpc(url) => grpc_client::grpc_update_post(url, id, title, content, &token).await,
-        // }
+    pub async fn update_post(&self, id: i64, title: &str, content: &str) -> Result<UpdatePostResponse, ClientError> {
 
         let token = self.token.lock().await.clone()
             .ok_or(ClientError::UnAuthorizedError)?;
 
         let req = UpdatePostRequest {
-            post_id: todo!(),
+            post_id: id,
             title: title.to_string(),
             content: content.to_string(),
         };
         let res = match &self.transport {
-            Transport::Http => self.http_client.new_post(&token, req).await?,
-            Transport::Grpc => self.grpc_client.new_post(&token, req).await?,
+            Transport::Http => self.http_client.update_post(&token, req).await?,
+            Transport::Grpc => self.grpc_client.update_post(&token, req).await?,
         };
         Ok(res)
     }
 
-    pub async fn delete_post(&self, id: i64) -> Result<(), BlogClientError> {
+    pub async fn del_post(&self, id: i64) -> Result<DeletePostResponse, ClientError> {
         let token = self.token.lock().await.clone()
-            .ok_or(BlogClientError::Unauthorized)?;
-        match &self.transport {
-            Transport::Http(_) => self.http.delete_post(id, &token).await,
-            Transport::Grpc(url) => grpc_client::grpc_delete_post(url, id, &token).await,
-        }
+            .ok_or(ClientError::UnAuthorizedError)?;
+
+        let req = DeletePostRequest { post_id: id };
+
+        let res = match &self.transport {
+            Transport::Http => self.http_client.del_post(&token, req).await?,
+            Transport::Grpc => self.grpc_client.del_post(&token, req).await?,
+        };
+        Ok(res)
+
     }
 
-    pub async fn list_posts(&self, limit: i64, offset: i64) -> Result<PostsList, BlogClientError> {
-        match &self.transport {
-            Transport::Http(_) => self.http.list_posts(limit, offset).await,
-            Transport::Grpc(url) => grpc_client::grpc_list_posts(url, limit, offset).await,
-        }
+    pub async fn list_posts(&self, limit: i64, offset: i64) -> Result<ListPostsResponse, ClientError> {
+
+        let req = ListPostsRequest { offset, limit };
+
+        let res = match &self.transport {
+            Transport::Http => self.http_client.posts_list(req).await?,
+            Transport::Grpc => self.grpc_client.posts_list(req).await?,
+        };
+        Ok(res)
     }
 }

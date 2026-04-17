@@ -22,7 +22,6 @@ pub struct PostCreatedInfo {
 pub struct PostUpdateInfo {
     pub title: String, 
     pub content: String,
-    pub author_id: i64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

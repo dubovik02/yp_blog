@@ -16,15 +16,11 @@ impl BlogService {
         Self { blog_store }
     }
 
-    pub async fn new_post(&self, user_id: i64, post_data: PostCreatedInfo) -> Result<Post, ServerError> {
-
-        let jwt_user_id = user_id;
-        let author_id = post_data.author_id;
-        if jwt_user_id != author_id { return Err(ServerError::Forbidden)}
+    pub async fn new_post(&self, post_data: PostCreatedInfo) -> Result<Post, ServerError> {
 
         let new_post = self.blog_store.insert_post(
             PostCreatedInfo {
-                author_id: user_id,
+                author_id: post_data.author_id,
                 title: post_data.title.clone(),
                 content: post_data.content.clone()
             }
@@ -45,14 +41,15 @@ impl BlogService {
     pub async fn edit_post(&self, user_id: i64, post_id: i64, 
         post_data: PostUpdateInfo) -> Result<Post, ServerError> {
 
-        let jwt_user_id = user_id;
-        let author_id = post_data.author_id;
-        if jwt_user_id != author_id { return Err(ServerError::Forbidden)}
+        let post = self.blog_store.get_post_by_id(post_id).await?;
+
+        if post.author_id != user_id { 
+            return Err(ServerError::Forbidden)
+        };
 
         let upd_post = self.blog_store.update_post_by_id(
             post_id,
             PostUpdateInfo {
-                author_id: author_id,
                 title: post_data.title.clone(),
                 content: post_data.content.clone()
             }

@@ -1,11 +1,12 @@
-use clap::Parser;
+use blog_client::{BlogClient, Transport, error::ClientError};
+use clap::{Parser, Subcommand};
 
 const TOKEN_FILE_PATH: &str = ".blog_token";
 const DEFAULT_HTTP_HOST: &str = "http://localhost:8080";
 const DEFAULT_GRPC_HOST: &str = "http://localhost:50051";
 
 #[derive(Parser)]
-#[command(name = "blog-cli", about = "Сlient for thr Blog server", version)]
+#[command(name = "blog-cli", about = "Сlient for the Blog server", version)]
 struct CliParams {
     #[arg(long, global = true)]
     grpc: bool,
@@ -18,7 +19,7 @@ struct CliParams {
 #[derive(Subcommand)]
 enum Commands {
     /// Register
-    register {
+    Register {
         #[arg(long)]
         username: String,
         #[arg(long)]
@@ -27,28 +28,26 @@ enum Commands {
         password: String,
     },
     /// Login
-    login {
+    Login {
         #[arg(long)]
         email: String,
         #[arg(long)]
         password: String,
     },
     /// Create post
-    create {
+    Create {
         #[arg(long)]
         title: String,
         #[arg(long)]
         content: String,
-        #[arg(long)]
-        author_id: i64,
     },
     /// Get post
-    get {
+    Get {
         #[arg(long)]
         post_id: i64,
     },
     /// Update post
-    update {
+    Update {
         #[arg(long)]
         post_id: i64,
         #[arg(long)]
@@ -57,12 +56,12 @@ enum Commands {
         content: String,
     },
     /// Delete post
-    delete {
+    Delete {
         #[arg(long)]
         post_id: i64,
     },
     /// Posts list
-    list {
+    List {
         #[arg(long, default_value = "10")]
         limit: i64,
         #[arg(long, default_value = "0")]
@@ -70,82 +69,99 @@ enum Commands {
     },
 }
 
-fn load_token() -> Option<String> {
-    std::fs::read_to_string(TOKEN_FILE_PATH).ok().map(|s| s.trim().to_string())
-}
-
-fn save_token(token: &str) -> Result<()> {
-    std::fs::write(TOKEN_FILE_PATH, token)?;
-    Ok(())
-}
-
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> Result<(), ClientError> {
     let cli = CliParams::parse();
 
-    let transport = if cli.grpc {
-        let addr = cli.server.unwrap_or_else(|| DEFAULT_GRPC.to_string());
-        Transport::Grpc(addr)
-    } else {
-        let addr = cli.server.unwrap_or_else(|| DEFAULT_HTTP.to_string());
-        Transport::Http(addr)
+    let cli_param = if cli.grpc {
+        (
+            cli.server.unwrap_or_else(|| DEFAULT_GRPC_HOST.to_string()),
+            Transport::Grpc
+        )
+    }
+    else {
+        (
+            cli.server.unwrap_or_else(|| DEFAULT_HTTP_HOST.to_string()),
+            Transport::Http
+        )
     };
 
-    let client = BlogClient::new(transport).await?;
+    let client = BlogClient::new(cli_param.0, cli_param.1).await?;
 
-    if let Some(token) = load_token() {
+    if let Some(token) = read_token() {
         client.set_token(token).await;
     }
 
     match cli.command {
-        Commands::register { username, email, password } => {
+        Commands::Register { username, email, password } => {
             let res = client.register(&username, &email, &password).await?;
             save_token(&res.token)?;
-            println!("Registered successfully!");
-            println!("User: {} ({})", res.user.username, res.user.email);
-            println!("Token saved to {TOKEN_FILE_PATH}");
+            if let Some(user) = res.user {
+                println!("User has registered.");
+                println!("User: {} ({})", user.username, user.email);
+            }
+            println!("Token is located to: {TOKEN_FILE_PATH}");
         }
-        Commands::Login { username, password } => {
-            let resp = client.login(&username, &password).await?;
-            save_token(&resp.token)?;
-            println!("Logged in as {}", resp.user.username);
-            println!("Token saved to {TOKEN_FILE_PATH}");
+
+        Commands::Login { email, password } => {
+            let res = client.login( &email, &password).await?;
+            save_token(&res.token)?;
+            if let Some(user) = res.user {
+                println!("Logged in ({})", user.username);
+            }
+            println!("Token is located to: {TOKEN_FILE_PATH}");
         }
+
         Commands::Create { title, content } => {
-            let post = client.create_post(&title, &content).await?;
-            println!("Post created (id={}):", post.id);
-            println!("  Title:   {}", post.title);
-            println!("  Author:  {}", post.author_username);
-            println!("  Created: {}", post.created_at);
+            let res = client.new_post(&title, &content).await?;
+            if let Some(post) = res.post {
+                println!("Post # {} has created", post.id);
+                println!("Post theme: {}", post.title);
+            }
+            else {
+                println!("{:?}", res)
+            }
         }
-        Commands::Get { id } => {
-            let post = client.get_post(id).await?;
-            println!("Post #{}:", post.id);
-            println!("  Title:   {}", post.title);
-            println!("  Author:  {}", post.author_username);
-            println!("  Content: {}", post.content);
-            println!("  Created: {}", post.created_at);
+
+        Commands::Get { post_id } => {
+            let res = client.get_post(post_id).await?;
+            if let Some(post) = res.post {
+                println!("Post # {} has got:", post.id);
+                println!("Post theme: {}", post.title);
+            }
         }
-        Commands::Update { id, title, content } => {
-            let post = client.update_post(id, &title, &content).await?;
-            println!("Post #{} updated:", post.id);
-            println!("  Title:   {}", post.title);
-            println!("  Updated: {}", post.updated_at);
+
+        Commands::Update { post_id, title, content } => {
+            let res = client.update_post(post_id, &title, &content).await?;
+            if let Some(post) = res.post {
+                println!("Post # {} has updated:", post.id);
+                println!("Post theme: {}", post.title);
+            }
         }
-        Commands::Delete { id } => {
-            client.delete_post(id).await?;
-            println!("Post #{id} deleted");
+        Commands::Delete { post_id } => {
+            client.del_post(post_id).await?;
+            println!("Post # {post_id} has deleted");
         }
+
         Commands::List { limit, offset } => {
-            let result = client.list_posts(limit, offset).await?;
-            println!("Posts ({}/{}):", result.posts.len(), result.total);
-            println!("{:<5} {:<30} {:<20}", "ID", "TITLE", "AUTHOR");
+            let res = client.list_posts( limit, offset).await?;
+            println!("{} posts have got", res.posts.len());
+            println!("{:<5} {:<20}", "ID", "TITLE");
             println!("{}", "-".repeat(60));
-            for p in &result.posts {
-                println!("{:<5} {:<30} {:<20}", p.id, &p.title, &p.author_username);
+            for p in &res.posts {
+                println!("{:<5} {:<20}", p.id, &p.title);
             }
         }
     }
 
+    Ok(())
+}
+
+fn read_token() -> Option<String> {
+    std::fs::read_to_string(TOKEN_FILE_PATH).ok().map(|s| s.trim().to_string())
+}
+
+fn save_token(token: &str) -> Result<(), ClientError> {
+    std::fs::write(TOKEN_FILE_PATH, token)?;
     Ok(())
 }

@@ -476,6 +476,9 @@ version = "0.1.0"
 dependencies = [
  "blog-client",
  "clap",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
 ]
 
 [[package]]
@@ -490,6 +493,7 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tonic",
+ "tonic-prost",
  "tonic-prost-build",
 ]
 

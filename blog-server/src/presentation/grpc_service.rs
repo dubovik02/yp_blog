@@ -118,9 +118,8 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         let req = request.into_inner();
 
         let post = self.blog_service.new_post(
-            jwt_user_id,
             PostCreatedInfo {
-                author_id: req.author_id, 
+                author_id: jwt_user_id,
                 title: req.title, 
                 content: req.content
             }
@@ -176,8 +175,7 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
             req.post_id, 
             PostUpdateInfo { 
                 title: req.title, 
-                content: req.content, 
-                author_id: req.author_id 
+                content: req.content
             }
         ).await
         .map_err(|e| match e {

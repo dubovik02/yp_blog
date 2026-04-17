@@ -5,9 +5,9 @@ use actix_web::{HttpResponse, Responder, http::StatusCode, web};
 use crate::{
     application::{auth_service::AuthService, blog_service::BlogService}, 
     blog::CreateRegisterRequest, 
-    domain::{error::ServerError, 
-    post::{PaginationQuery, PostCreatedInfo, PostUpdateInfo}, 
-    user::{UserLoginInfo, UserRegisterInfo}}, presentation::{http_handlers::blog::{CreatePostRequest, LoginRequest, UpdatePostRequest}, 
+    domain::{self, error::ServerError, post::{PaginationQuery, PostCreatedInfo, PostUpdateInfo}, 
+    user::{UserLoginInfo, UserRegisterInfo}}, 
+    presentation::{http_handlers::blog::{CreatePostRequest, LoginRequest}, 
     middleware::AuthenticatedUser}};
 
 mod blog {
@@ -70,8 +70,7 @@ pub async fn new_post(blog_service: web::Data<Arc<BlogService>>, user: Authentic
 
     tracing::info!("Attempt to create new post");
     
-    let new_post = blog_service.new_post(
-        user.user_id,
+    let new_post: crate::domain::post::Post = blog_service.new_post(
         PostCreatedInfo {
             author_id: user.user_id,
             title: post_data.title.clone(),
@@ -80,7 +79,9 @@ pub async fn new_post(blog_service: web::Data<Arc<BlogService>>, user: Authentic
     ).await?;
 
     tracing::info!("Post created is ok");
-    Ok(HttpResponse::Created().json(serde_json::json!(new_post)))
+    Ok(HttpResponse::Created().json(serde_json::json!({
+        "post": convert_domain_post_to_proto_post(new_post)
+    })))
 }
 
 pub async fn get_post(blog_service: web::Data<Arc<BlogService>>, path: web::Path<i64>) -> Result<HttpResponse, ServerError> {
@@ -91,11 +92,13 @@ pub async fn get_post(blog_service: web::Data<Arc<BlogService>>, path: web::Path
     ).await?;
 
     tracing::info!("Request for post ok");
-    Ok(HttpResponse::Created().json(serde_json::json!(post)))
+    Ok(HttpResponse::Created().json(serde_json::json!({
+        "post": convert_domain_post_to_proto_post(post)
+    })))
 }
 
 pub async fn edit_post(blog_service: web::Data<Arc<BlogService>>, user: AuthenticatedUser, path: web::Path<i64>, 
-    post_data: web::Json<UpdatePostRequest>) -> Result<HttpResponse, ServerError> {
+    post_data: web::Json<PostUpdateInfo>) -> Result<HttpResponse, ServerError> {
 
     tracing::info!("Request for change post ID: {}", path.clone());
     let upd_post = blog_service.edit_post(
@@ -104,12 +107,13 @@ pub async fn edit_post(blog_service: web::Data<Arc<BlogService>>, user: Authenti
         PostUpdateInfo {
             title: post_data.title.clone(),
             content: post_data.content.clone(),
-            author_id: post_data.author_id,
         }
     ).await?;
 
     tracing::info!("Post has updated and sending");
-    Ok(HttpResponse::Created().json(serde_json::json!(upd_post)))
+    Ok(HttpResponse::Created().json(serde_json::json!({
+        "post": convert_domain_post_to_proto_post(upd_post)
+    })))
 }
 
 pub async fn del_post(blog_service: web::Data<Arc<BlogService>>, user: AuthenticatedUser, path: web::Path<i64>) 
@@ -149,4 +153,14 @@ pub async fn posts_list(blog_service: web::Data<Arc<BlogService>>, query: web::Q
         }
     )))
 
+}
+
+fn convert_domain_post_to_proto_post(base_post: domain::post::Post) -> blog::Post {
+
+    blog::Post {
+        id: base_post.id,
+        title: base_post.title,
+        content: base_post.content,
+        author_id: base_post.author_id,
+    }
 }

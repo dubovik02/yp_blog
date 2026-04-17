@@ -61,7 +61,6 @@ message Post {
 message CreatePostRequest {
     string title = 1;
     string content = 2;
-    int64 author_id = 3;
 }
 
 message CreatePostResponse {
@@ -80,7 +79,6 @@ message UpdatePostRequest {
     int64 post_id = 1;
     string title = 2;
     string content = 3;
-    int64 author_id = 4;
 }
 
 message UpdatePostResponse {

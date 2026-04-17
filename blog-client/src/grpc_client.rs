@@ -1,7 +1,7 @@
 use tonic::{Request, metadata::MetadataValue, transport::Channel};
 
 use crate::{
-    BlogClientInterface, blog_proto::{CreatePostRequest, CreatePostResponse, CreateRegisterRequest, 
+    blog_proto::{CreatePostRequest, CreatePostResponse, CreateRegisterRequest, 
         DeletePostRequest, DeletePostResponse, GetPostRequest, GetPostResponse, ListPostsRequest, 
         ListPostsResponse, LoginRequest, LoginResponse, RegisterResponse, 
         UpdatePostRequest, UpdatePostResponse, 
@@ -92,21 +92,22 @@ impl BlogGrpcClient {
 
 }
 
-impl BlogClientInterface for BlogGrpcClient {
+//impl BlogClientInterface for BlogGrpcClient {
+impl BlogGrpcClient {
 
-    async fn register(&self, req: CreateRegisterRequest) -> Result<RegisterResponse, ClientError> {
+    pub async fn register(&self, req: CreateRegisterRequest) -> Result<RegisterResponse, ClientError> {
         let mut client = self.connect().await?;
         let res = client.register(req).await?.into_inner();
         Ok(res)
     }
 
-    async fn login(&self, req: LoginRequest) -> Result<LoginResponse, ClientError> {
+    pub async fn login(&self, req: LoginRequest) -> Result<LoginResponse, ClientError> {
         let mut client = self.connect().await?;
         let res = client.login(req).await?.into_inner();
         Ok(res)
     }
 
-    async fn new_post(&self, token: &str, req_data: CreatePostRequest) -> Result<CreatePostResponse, ClientError> {
+    pub async fn new_post(&self, token: &str, req_data: CreatePostRequest) -> Result<CreatePostResponse, ClientError> {
         let mut client = self.connect().await?;
         let mut req = Request::new(req_data);
         let val: MetadataValue<_> = format!("Bearer {token}")
@@ -119,13 +120,13 @@ impl BlogClientInterface for BlogGrpcClient {
         Ok(res)
     }
 
-    async fn get_post(&self, id: i64) -> Result<GetPostResponse, ClientError> {
+    pub async fn get_post(&self, id: i64) -> Result<GetPostResponse, ClientError> {
         let mut client = self.connect().await?;
         let res = client.get_post(GetPostRequest { post_id: id }).await?.into_inner();
         Ok(res)
     }
 
-    async fn update_post(&self, token: &str, req_data: UpdatePostRequest) -> Result<UpdatePostResponse, ClientError> {
+    pub async fn update_post(&self, token: &str, req_data: UpdatePostRequest) -> Result<UpdatePostResponse, ClientError> {
         let mut client = self.connect().await?;
         let mut req = Request::new(req_data);
         let val: MetadataValue<_> = format!("Bearer {token}")
@@ -138,7 +139,7 @@ impl BlogClientInterface for BlogGrpcClient {
         Ok(res)
     }
 
-    async fn del_post(&self, token: &str, req_data: DeletePostRequest) -> Result<DeletePostResponse, ClientError> {
+    pub async fn del_post(&self, token: &str, req_data: DeletePostRequest) -> Result<DeletePostResponse, ClientError> {
         let mut client = self.connect().await?;
         let mut req = Request::new(req_data);
         let val: MetadataValue<_> = format!("Bearer {token}")
@@ -151,7 +152,7 @@ impl BlogClientInterface for BlogGrpcClient {
         Ok(res)
     }
 
-    async fn posts_list(&self, req_data: ListPostsRequest) -> Result<ListPostsResponse, ClientError> {
+    pub async fn posts_list(&self, req_data: ListPostsRequest) -> Result<ListPostsResponse, ClientError> {
         let mut client = self.connect().await?;
         let res = client.list_posts(req_data).await?.into_inner();
         Ok(res)
