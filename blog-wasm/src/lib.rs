@@ -12,7 +12,6 @@ pub const PATH_PROTECTED: &str = "/protected";
 pub const PATH_REGISTER: &str = "/auth/register";
 pub const PATH_LOGIN: &str = "/auth/login";
 pub const PATH_POSTS: &str = "/posts";
-pub const PATH_POSTS_NEW: &str = "/new";
 pub const PATH_ME: &str = "/me";
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -67,11 +66,6 @@ pub struct BlogApp {
 
 #[wasm_bindgen]
 pub fn save_token_to_storage(token: &str) {
-    // if let Some(window) = window() {
-    //     if let Ok(Some(storage)) = window.local_storage() {
-    //         let _ = storage.set_item(TOKEN_LOCAL_STORAGE_KEY, token);
-    //     }
-    // }
     if let Some(window) = window()
          && let Ok(Some(storage)) = window.local_storage() {
              let _ = storage.set_item(TOKEN_LOCAL_STORAGE_KEY, token);
@@ -87,11 +81,6 @@ pub fn get_token_from_storage() -> Option<String> {
 
 #[wasm_bindgen]
 pub fn del_token() {
-    // if let Some(window) = window() {
-    //     if let Ok(Some(storage)) = window.local_storage() {
-    //         let _ = storage.remove_item(TOKEN_LOCAL_STORAGE_KEY);
-    //     }
-    // }
     if let Some(window) = window()
          && let Ok(Some(storage)) = window.local_storage() {
              let _ = storage.remove_item(TOKEN_LOCAL_STORAGE_KEY);
@@ -200,7 +189,7 @@ pub async fn new_post(title: String, content: String) -> Result<JsValue, JsValue
 
     let token = get_token_from_storage().ok_or_else(|| JsValue::from_str("You have to be authorized"))?;
     let body = serde_json::json!({"title": title, "content": content});
-    let res = Request::post(&format!("{}{}{}{}{}", BASE_URL, PATH_BASE, PATH_PROTECTED, PATH_POSTS, PATH_POSTS_NEW))
+    let res = Request::post(&format!("{}{}{}{}", BASE_URL, PATH_BASE, PATH_PROTECTED, PATH_POSTS))
         .header("Content-Type", "application/json")
         .header("Authorization", &format!("Bearer {token}"))
         .body(body.to_string())
