@@ -111,7 +111,7 @@ pub async fn get_post(blog_service: web::Data<Arc<BlogService>>, path: web::Path
     ).await?;
 
     tracing::info!("Request for post ok");
-    Ok(HttpResponse::Created().json(serde_json::json!({
+    Ok(HttpResponse::Ok().json(serde_json::json!({
         "post": convert_domain_post_to_proto_post(post)
     })))
 }
@@ -130,7 +130,7 @@ pub async fn edit_post(blog_service: web::Data<Arc<BlogService>>, user: Authenti
     ).await?;
 
     tracing::info!("Post has updated and sending");
-    Ok(HttpResponse::Created().json(serde_json::json!({
+    Ok(HttpResponse::Ok().json(serde_json::json!({
         "post": convert_domain_post_to_proto_post(upd_post)
     })))
 }

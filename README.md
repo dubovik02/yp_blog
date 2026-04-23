@@ -51,11 +51,11 @@ POST /api/v1/auth/login
 GERT /api/v1/protected/me
 
 Работа с блогом:
-GET /api/v1/posts
-GET /api/v1/posts/{id}
-POST /api/v1/protected/posts
-PUT /api/v1/protected/posts/{id}
-DELETE /api/v1/protected/posts/{id}
+Получение списка постов (пагинация) - GET /api/v1/posts?limit={limit}&offset={offset}
+Получение поста по ID - GET /api/v1/posts/{id}
+Создание поста - POST /api/v1/protected/posts
+Редактирование поста - PUT /api/v1/protected/posts/{id}
+Удаление поста - DELETE /api/v1/protected/posts/{id}
 
 
 ## GRPC API
@@ -80,13 +80,13 @@ cargo run -p blog-cli < HTTP/CRPC COMMAND >
 
 # Http
 
---server http://localhost:8080 register --username Abc --email abc@mail.cd --password qwerty
---server http://localhost:8080 login --email abc2@mail.cd --password qwerty
---server http://localhost:8080 create --title "abc2@mail.cd" --content "qwerty" 
---server http://localhost:8080 get --post-id 31
---server http://localhost:8080 update --post-id 31 --title "new abc2@mail.cd" --content "new qwerty"
---server http://localhost:8080 delete --post-id 31
---server http://localhost:8080 list
+--server http://localhost:3000 register --username Abc --email abc@mail.cd --password qwerty
+--server http://localhost:3000 login --email abc2@mail.cd --password qwerty
+--server http://localhost:3000 create --title "abc2@mail.cd" --content "qwerty" 
+--server http://localhost:3000 get --post-id 31
+--server http://localhost:3000 update --post-id 31 --title "new abc2@mail.cd" --content "new qwerty"
+--server http://localhost:3000 delete --post-id 31
+--server http://localhost:3000 list
 
 # Grpc
 

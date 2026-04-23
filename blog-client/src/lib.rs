@@ -22,7 +22,6 @@ pub const PATH_PROTECTED: &str = "/protected";
 pub const PATH_REGISTER: &str = "/auth/register";
 pub const PATH_LOGIN: &str = "/auth/login";
 pub const PATH_POSTS: &str = "/posts";
-pub const PATH_POSTS_NEW: &str = "/new";
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

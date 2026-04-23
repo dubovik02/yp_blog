@@ -104,7 +104,7 @@ async fn main() -> Result<(), ServerError>{
         .wrap(cors)
         .service(web::scope("/api/v1/protected")
             .wrap(HttpAuthentication::bearer(jwt_validator))
-            .route("/posts/new", web::post().to(new_post))
+            .route("/posts", web::post().to(new_post))
             .route("/posts/{id}", web::put().to(edit_post))
             .route("/posts/{id}", web::delete().to(del_post))
             .route("/me", web::get().to(get_user_info))

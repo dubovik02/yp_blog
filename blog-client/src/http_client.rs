@@ -4,7 +4,7 @@ use serde_json::json;
 pub const TIMEOUT_SEC: u64 = 30; 
 
 use crate::{
-    PATH_BASE, PATH_LOGIN, PATH_POSTS, PATH_POSTS_NEW, PATH_PROTECTED, PATH_REGISTER, 
+    PATH_BASE, PATH_LOGIN, PATH_POSTS, PATH_PROTECTED, PATH_REGISTER, 
     blog_proto::{CreatePostRequest, CreatePostResponse, CreateRegisterRequest, DeletePostRequest, DeletePostResponse, 
         GetPostResponse, ListPostsRequest, ListPostsResponse, LoginRequest, LoginResponse, RegisterResponse, 
         UpdatePostRequest, UpdatePostResponse}, error::ClientError
@@ -79,7 +79,7 @@ impl BlogHttpClient {
 
     pub async fn new_post(&self, token: &str, req: CreatePostRequest) -> Result<CreatePostResponse, ClientError> {
         let res = self.client
-            .post(format!("{}{}{}{}{}", self.base_url, PATH_BASE, PATH_PROTECTED, PATH_POSTS, PATH_POSTS_NEW))
+            .post(format!("{}{}{}{}", self.base_url, PATH_BASE, PATH_PROTECTED, PATH_POSTS))
             .bearer_auth(token)
             .json(&json!({"title": req.title, "content": req.content}))
             .send()
