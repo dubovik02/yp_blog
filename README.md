@@ -1,29 +1,82 @@
 <div align='center'>
 
-# bis_rust
+# bis_blog
 
 </div>
 
-Константы и ошибки
-DOT ENV не загружается для сервера
----
 
 ## Технологии
 
 Проект создан на базе:
 
--   Rust, Cargo
+-   Rust, Cargo, webAssembly, PostgreSql
 
 ## Реализованный функционал
 
+веб-сервер с HTTP и gRPC API,
+клиентская библиотека,
+CLI-клиент и WASM-фронтенд.
+
+## Настройка серверной части
+
+Развернуть и нстроить серев БД PostgreSQL
+
+Добавить .env в корень проекта
+
+Параметры переменных среды: 
+DATABASE_URL - строка подключения к серверу базы данных
+JWT_SECRET - ключ
+SERVER_HOST - адрес сервера http
+SERVER_PORT - порт сервера http
+GRPC_SERVER_HOST - адрес сервера grpc
+GRPC_SERVER_PORT - порт сервера grpc
 
 ## Сборка проекта
 
-cargo build
+Запуск из корня проекта:
 
-## Запуск проекта
+cargo build --workspace
 
-## Примеры команд
+## Запуск сервера
+
+Из корня проекта
+
+cargo run -p blog-server
+
+## HTTP API
+
+Аутентификация пользователя:
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+GERT /api/v1/protected/me
+
+Работа с блогом:
+GET /api/v1/posts
+GET /api/v1/posts/{id}
+POST /api/v1/protected/posts
+PUT /api/v1/protected/posts/{id}
+DELETE /api/v1/protected/posts/{id}
+
+
+## GRPC API
+Схема blog-server/proto/blog.proto/
+
+gRPC интерфейс реализует функционал HTTP API:
+
+регистрация
+вход
+список постов
+получение поста
+создание поста
+обновление поста
+удаление поста
+
+## CLI-клиент
+
+Запуск из корня проекта:
+cargo run -p blog-cli < HTTP/CRPC COMMAND >
+
+## Примеры команд CLI
 
 # Http
 
@@ -44,3 +97,12 @@ cargo build
 --grpc --server http://localhost:50051 update --post-id 31 --title "new abc2@mail.cd" --content "new qwerty"
 --grpc --server http://localhost:50051 delete --post-id 31
 --grpc --server http://localhost:50051 list
+
+## WASM-клиент
+
+Установить trunk:
+cargo install trunk
+
+Запуск из корня /blog-wasm:
+trunk serve
+Перейти на http://localhost:8080

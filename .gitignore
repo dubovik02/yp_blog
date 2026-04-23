@@ -3,6 +3,7 @@ logs
 *.log
 
 /target
+/blog-wasm/dist
 
 # Editor directories and files
 .vscode/*

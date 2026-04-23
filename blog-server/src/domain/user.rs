@@ -22,10 +22,6 @@ impl User {
             created_at:  Utc::now()
         }
     }
-
-    pub fn to_string(&self) -> String {
-        format!("{} ({})", self.username, self.email)
-    }
 }
 
 impl Default for User {
@@ -36,7 +32,7 @@ impl Default for User {
 
 impl fmt::Display for User {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", format!("{} ({})", self.username, self.email))
+        write!(f, "{}", format_args!("{} ({})", self.username, self.email))
     }
 }
 

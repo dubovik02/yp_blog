@@ -107,7 +107,7 @@ impl BlogRepository {
         match sqlx::query_as!(
             Post,
             r#"
-            SELECT * FROM posts ORDER By ID LIMIT $1 OFFSET $2
+            SELECT * FROM posts ORDER By CREATED_AT DESC LIMIT $1 OFFSET $2
             "#,
             limit,
             offset

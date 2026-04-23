@@ -5,7 +5,10 @@ use serde::{Deserialize, Serialize};
 
 use tokio::sync::Mutex;
 
-use crate::{blog_proto::{CreatePostRequest, CreatePostResponse, CreateRegisterRequest, DeletePostRequest, DeletePostResponse, GetPostRequest, GetPostResponse, ListPostsRequest, ListPostsResponse, LoginRequest, LoginResponse, RegisterResponse, UpdatePostRequest, UpdatePostResponse}, error::ClientError, grpc_client::BlogGrpcClient, http_client::BlogHttpClient};
+use crate::{blog_proto::{CreatePostRequest, CreatePostResponse, CreateRegisterRequest, DeletePostRequest, 
+    DeletePostResponse, GetPostResponse, ListPostsRequest, ListPostsResponse, LoginRequest, 
+    LoginResponse, RegisterResponse, UpdatePostRequest, UpdatePostResponse}, error::ClientError, 
+    grpc_client::BlogGrpcClient, http_client::BlogHttpClient};
 
 pub mod http_client;
 pub mod grpc_client;
@@ -52,25 +55,6 @@ pub struct PostsList {
     pub offset: i64,
 }
 
-// pub trait BlogClientInterface {
-
-//     //fn register(&self, req: CreateRegisterRequest) -> impl std::future::Future<Output = Result<RegisterResponse, ClientError>> + Send;
-//     async fn register(&self, req: CreateRegisterRequest) -> Result<RegisterResponse, ClientError>;
-
-//     async fn login(&self, req: LoginRequest) -> Result<LoginResponse, ClientError>;
-
-//     async fn new_post(&self, token: &str, req_data: CreatePostRequest) -> Result<CreatePostResponse, ClientError>;
-
-//     async fn get_post(&self, id: i64) -> Result<GetPostResponse, ClientError>;
-
-//     async fn update_post(&self, token: &str, req_data: UpdatePostRequest) -> Result<UpdatePostResponse, ClientError>;
-
-//     async fn del_post(&self, token: &str, req_data: DeletePostRequest) -> Result<DeletePostResponse, ClientError>;
-
-//     async fn posts_list(&self, req_data: ListPostsRequest) -> Result<ListPostsResponse, ClientError>;
-    
-// }
-
 #[derive(Debug, Clone)]
 pub enum Transport {
     Http,
@@ -88,7 +72,7 @@ impl BlogClient {
 
     pub async fn new(url: String, transport: Transport) -> Result<Self, ClientError> {
         Ok(Self {  
-            transport: transport,
+            transport,
             token: Arc::new(Mutex::new(None)),
             http_client: Arc::new(BlogHttpClient::new(url.clone())?),
             grpc_client: Arc::new(BlogGrpcClient::new(url.clone())),

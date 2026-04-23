@@ -8,9 +8,6 @@ pub enum ServerError {
     #[error("Input-output error: {0}")]
     Io(#[from] io::Error),
 
-    #[error("You have to authorized")]
-    UnAuthorizedError,
-
     #[error("User not found error")]
     UserNotFoundError,
 
@@ -31,9 +28,6 @@ pub enum ServerError {
 
     #[error("Migration error has happend: {0}")]
     MigrationError(#[from] sqlx::migrate::MigrateError),
-
-    // #[error("Sereliazation or desereliazation error: {0}")]
-    // SerdeError(#[from] serde_binary_adv::BinaryError),
 
     #[error("Coding (encoding) error: {0}")]
     CodingEncodingError(#[from] jsonwebtoken::errors::Error),
@@ -69,13 +63,11 @@ pub enum ServerError {
 impl ResponseError for ServerError {
     fn error_response(&self) -> HttpResponse {
         let status = match self {
-            //ServerError::Validation(_) => StatusCode::BAD_REQUEST,
             ServerError::PaganationError => StatusCode::BAD_REQUEST,
             ServerError::UserAlreadyExistsError => StatusCode::CONFLICT,
             ServerError::UserNotFoundError => StatusCode::NOT_FOUND,
             ServerError::PostNotFoundError => StatusCode::NOT_FOUND,
             ServerError::InvalidCredentialsError => StatusCode::UNAUTHORIZED,
-            ServerError::UnAuthorizedError => StatusCode::UNAUTHORIZED,
             ServerError::InternalServerError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ServerError::Forbidden => StatusCode::FORBIDDEN,
             _ => StatusCode::BAD_REQUEST

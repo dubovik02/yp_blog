@@ -51,7 +51,7 @@ impl AuthService {
             user.email.clone()
         ).await?;
 
-        let parsed_hash = PasswordHash::new(&logged_user.password_hash.as_str())?;
+        let parsed_hash = PasswordHash::new(logged_user.password_hash.as_str())?;
         let argon2 = Argon2::default();
         let verify = argon2.verify_password(user.password.as_bytes(), &parsed_hash).is_ok();
 
@@ -66,5 +66,16 @@ impl AuthService {
 
         tracing::info!("Login is ok");
         Ok((token, logged_user))        
+    }
+
+    pub async fn get_user_info(&self, user_id: i64) -> Result<User, ServerError> {
+
+        tracing::info!("Attemp to get user info {}", user_id);
+
+        let logged_user = self.user_store.get_user_by_id(
+            user_id
+        ).await?;
+
+        Ok(logged_user)        
     }
 }

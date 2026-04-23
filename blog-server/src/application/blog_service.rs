@@ -73,17 +73,17 @@ impl BlogService {
         ).await?;
 
         if is_post_del { 
-            return Ok(true);
+            Ok(true)
         }
         else {
-            return Err(ServerError::PostNotFoundError);
+            Err(ServerError::PostNotFoundError)
         }
     }
 
     pub async fn posts_list(&self, offset: i64, limit: i64) -> Result<Vec<Post>, ServerError> {
 
-        if offset < 0 || offset > 100 { return Err(ServerError::PaganationError) }
-        if limit < 0 || limit > 100 { return Err(ServerError::PaganationError) }
+        if !(0..=100).contains(&offset) { return Err(ServerError::PaganationError) }
+        if !(0..=100).contains(&limit) { return Err(ServerError::PaganationError) }
 
         let posts = self.blog_store.get_posts_list(offset, limit).await?;
         Ok(posts)

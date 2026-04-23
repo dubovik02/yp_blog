@@ -35,6 +35,7 @@ pub async fn create_user(auth_service: web::Data<Arc<AuthService>>, user: web::J
                 {
                     "token": user_data.0,
                     "user": {
+                        "id": user_data.1.id,
                         "username": user_data.1.username,
                         "email": user_data.1.email,
                     }
@@ -57,9 +58,27 @@ pub async fn login_user(auth_service: web::Data<Arc<AuthService>>, user: web::Js
                 {
                     "token": logged_user.0,
                     "user": {
+                        "id": logged_user.1.id,
                         "username": logged_user.1.username,
                         "email": logged_user.1.email,
                     }
+                }
+            )
+        )
+    )
+}
+
+pub async fn get_user_info(auth_service: web::Data<Arc<AuthService>>, user: AuthenticatedUser) 
+    -> Result<HttpResponse, ServerError> {
+
+    let logged_user = auth_service.get_user_info(user.user_id).await?;
+
+    tracing::info!("Getting user info is ok");
+    Ok(HttpResponse::Ok().json(serde_json::json!(
+                {
+                    "id": logged_user.id,
+                    "username": logged_user.username,
+                    "email": logged_user.email
                 }
             )
         )
@@ -127,11 +146,11 @@ pub async fn del_post(blog_service: web::Data<Arc<BlogService>>, user: Authentic
 
     if is_post_del { 
         tracing::info!("Post has deleted");
-        return Ok(HttpResponse::new (StatusCode::NO_CONTENT));
+        Ok(HttpResponse::new (StatusCode::NO_CONTENT))
     }
     else {
         tracing::warn!("Post has not deleted");
-        return Err(ServerError::PostNotFoundError);
+        Err(ServerError::PostNotFoundError)
     }
 }
 
@@ -149,7 +168,7 @@ pub async fn posts_list(blog_service: web::Data<Arc<BlogService>>, query: web::Q
             "posts": posts,
             "total": posts.len(),
             "limit": limit,
-            "offset:": offset 
+            "offset": offset 
         }
     )))
 

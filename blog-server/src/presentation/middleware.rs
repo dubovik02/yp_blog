@@ -1,4 +1,4 @@
-use std::future::{Ready, ready};
+use std::{env, future::{Ready, ready}};
 
 use actix_web::{FromRequest, HttpMessage, HttpRequest, dev::ServiceRequest, error::ErrorUnauthorized};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
@@ -11,19 +11,6 @@ pub struct  AuthenticatedUser {
     pub user_name: String
 }
 
-impl AuthenticatedUser {
-    pub fn new() -> Self {
-        Self {
-            user_id: 0, 
-            user_name: String::new(),
-        }
-    }
-
-    pub fn to_string(&self) -> String {
-        format!("{}", self.user_name)
-    }
-}
-
 impl FromRequest for AuthenticatedUser {
     type Error = actix_web::Error;
     type Future = Ready<Result<Self, Self::Error>>;
@@ -31,16 +18,18 @@ impl FromRequest for AuthenticatedUser {
     fn from_request(req: &HttpRequest, payload: &mut actix_web::dev::Payload) -> Self::Future {
         let value = req.extensions().get::<AuthenticatedUser>().cloned();
         match value {
-            Some(user) => return ready(Ok(user)),
-            None => return ready(Err(ErrorUnauthorized("No claims"))),
+            Some(user) => ready(Ok(user)),
+            None => ready(Err(ErrorUnauthorized("No claims"))),
         }
     }
 }
 
 pub async fn jwt_validator(req: ServiceRequest, token: BearerAuth) -> Result<ServiceRequest, (actix_web::Error, ServiceRequest)> {
 
-    let jwt_service = JwtService::new(JWT_SECRET_KEY);
-    let verify = jwt_service.verify_token(&token.token());
+    let secret_key = env::var("JWT_SECRET")
+        .unwrap_or_else(|_| JWT_SECRET_KEY.to_string());
+    let jwt_service = JwtService::new(&secret_key);
+    let verify = jwt_service.verify_token(token.token());
 
     match verify {
         Ok(claims) => {
@@ -48,9 +37,9 @@ pub async fn jwt_validator(req: ServiceRequest, token: BearerAuth) -> Result<Ser
                 user_id: claims.user_id,
                 user_name: claims.username
             });
-            return Ok(req)
+            Ok(req)
         }
-        Err(_) => return Err((actix_web::error::ErrorUnauthorized("Invalid token"), req))
+        Err(_) => Err((actix_web::error::ErrorUnauthorized("Invalid token"), req))
     }
 
 }

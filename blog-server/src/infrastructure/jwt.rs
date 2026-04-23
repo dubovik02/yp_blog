@@ -46,14 +46,14 @@ impl JwtService {
         match encode(
             &Header::default(),
             &Claims {
-                user_id: user_id,
+                user_id,
                 username: username.to_owned(),
                 exp: (Utc::now() + Duration::minutes(JWT_TTL_MINUTES)).timestamp(),
             },
             &self.encoding_key
         ) {
-            Ok(token) => return Ok(token),
-            Err(e) => return Err(ServerError::CodingEncodingError(e)),
+            Ok(token) => Ok(token),
+            Err(e) => Err(ServerError::CodingEncodingError(e)),
         }
     }
 

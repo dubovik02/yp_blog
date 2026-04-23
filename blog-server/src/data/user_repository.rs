@@ -62,5 +62,28 @@ impl UserRepository {
             },
         }
     }
+
+    pub async fn get_user_by_id(&self, user_id: i64) -> Result<User, ServerError> {
+
+        match sqlx::query_as!(
+            User,
+            r#"
+            SELECT * FROM users WHERE ID = $1
+            "#,
+            user_id
+        )
+        .fetch_optional(&self.pool)
+        .await {
+            Ok(user) => {
+                match user {
+                    Some(user) => Ok(user),
+                    None => Err(ServerError::UserNotFoundError)
+                }
+            },
+            Err(e) => {
+                Err(ServerError::InternalServerError(Box::new(e)))
+            },
+        }
+    }
 }
 

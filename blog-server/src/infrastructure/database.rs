@@ -8,7 +8,7 @@ pub async fn create_pool(database_url: &str) -> Result<PgPool, ServerError> {
         .max_connections(20)
         .min_connections(5)
         .acquire_timeout(std::time::Duration::from_secs(5))
-        .connect(&database_url)
+        .connect(database_url)
         .await?;
     Ok(pool)
 }

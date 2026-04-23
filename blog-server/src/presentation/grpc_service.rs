@@ -41,13 +41,12 @@ impl BlogGrpcService {
     }
 
     pub fn transform_post_to_grpc_f(&self, base_post: &domain::post::Post) -> blog::Post {
-        let result = blog::Post {
+        blog::Post {
             id: base_post.id,
             title: base_post.title.clone(),
             content: base_post.content.clone(),
             author_id: base_post.author_id,
-        };
-        result
+        }
     }
 }
 
@@ -72,7 +71,7 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         })?;
 
         let reply = RegisterResponse { 
-            token: token, 
+            token, 
             user: Some(UserInfo { 
                 username: user.username, 
                 email: user.email
@@ -100,7 +99,7 @@ impl blog::blog_service_server::BlogService for BlogGrpcService {
         })?;
 
         let reply = LoginResponse {
-            token: token,
+            token,
             user: Some(UserInfo{username:user.username,email:user.email})
         };
         Ok(Response::new(reply))
