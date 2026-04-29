@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>YP_BLOG_WASM</title>
+  <link data-trunk rel="css" href="./styles.css"/>
+  <base data-trunk-public-url/>
+</head>
+<body>
+  <div class="root">
+  <h1 class="header">Блог WASM-Клиент</h1>
+  <div class="menu__container">
+    <span id="main_menu" class="post__button">Главная</span>
+    <span id="login_menu" class="post__button">Войти</span>
+    <span id="register_menu" class="post__button">Зарегистрироваться</span>
+  </div>
+
+  <form id="login_form" class="input_form is_unvisible">
+    <p class="input_header">Вход</p>
+
+    <span class="input_label">E-mail:</span>
+    <input id="email_input_login" class="input_text" type="text" placeholder="введите e-mail">
+
+    <span class="input_label">Пароль:</span>
+    <input id="password_input_login"  class="input_text" type="password" placeholder="введите пароль">
+
+    <button id="button_login" type="submit" class="app_button">Войти</button>
+
+    <span id="link_to_reg" class="app_link">Не зарегестрированы? Вам сюда</span>
+  </form>
+
+  <form id="register_form" class="input_form is_unvisible">
+    <p class="input_header">Регистрация</p>
+
+    <span class="input_label">Имя пользователя:</span>
+    <input id="username_input_reg" class="input_text" type="text" placeholder="введите имя пользователя">
+
+    <span class="input_label">E-mail:</span>
+    <input id="email_input_reg" class="input_text" type="text" placeholder="введите e-mail">
+
+    <span class="input_label">Пароль:</span>
+    <input id="password_input_reg"  class="input_text" type="password" placeholder="введите пароль">
+
+    <button id="button_reg" type="submit" class="app_button">Зарегистрироваться</button>
+
+    <span id="link_to_login" class="app_link">Уже зарегистртрованы? Вам сюда</span>
+  </form>
+
+  <form id="posts_form" class="input_form form_max_width">
+    <p class="input_header">Посты</p>
+    <span id="new_post" class="post__button">Создать новый</span>
+
+    <div id="posts_container" class="posts__container">
+    </div>
+  </form>
+
+  </div>
+
+  <div class="preloader-container is_unvisible" id="preloader">
+      <i class="circle-preloader"></i>
+      <span class="preloader-container__title">Выполняем...</span>
+  </div>
+
+  <link data-trunk rel="rust" href="Cargo.toml" />
+  <script data-trunk src="./script.js" type="module"></script>
+</body>
+</html>
